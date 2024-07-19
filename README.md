@@ -5,6 +5,7 @@ The FluoAnalysis MATLAB toolbox provides a robust and versatile platform for the
 Just download the files and add them to the Matlab path.
 
 # Analysing sample data
+You can download the sample data from https://www.dropbox.com/scl/fo/hmul4k5c5omihbmkx1b51/AB3DHfvQWlPWtZLIsDRDcYU?rlkey=ghq5k0sqop371as2iesa6d1vk&dl=0
 
 ## Traditional Ca2+ imaging, ATP application on brain slice
 Acute hippocampal slices from Wistar rats, expressing GCaMP2 in both neurons and astrocytes, are subjected to application of 1 mM ATP at 200 s.
