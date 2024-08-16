@@ -1,5 +1,6 @@
 # FluoAnalysis
-The FluoAnalysis MATLAB toolbox provides a robust and versatile platform for the integrated analysis of calcium imaging and electrophysiological data, supporting diverse neuroscience research applications.
+The FluoAnalysis MATLAB toolbox provides a robust and versatile platform for the integrated analysis of calcium imaging and electrophysiological data, supporting diverse neuroscience research applications. It especially focuses on the spectral analysis of imaging data acquired from hundreds of cells in a network with high sampling rate.
+The toolbox provides both fully automatable script-based analysis, as well as a detailed GUI thourgh which most of the features can be used by researchers without programming background.
 
 # Install
 Just download the files and add them to the Matlab path.
