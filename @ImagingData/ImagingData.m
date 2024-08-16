@@ -55,11 +55,6 @@ classdef ImagingData < handle
         SubtractBackgroundLevelMode = 'auto'
         % Parameter for smoothing DF/F0 traces
         Smooth = 1
-        
-        % Cross-correlation between imaging signals at specified intervals
-        CrossCorrelationImaging CrossCorrelationResult = CrossCorrelationResult
-        % Cross-correlation between ephys and imaging signals at specified intervals
-        CrossCorrelationEphysImaging CrossCorrelationResult = CrossCorrelationResult
 
         % Identified peaks on the DF/F0 traces
         Peaks
@@ -95,10 +90,18 @@ classdef ImagingData < handle
         DeltaFperF0SmoothedBaselineAdjusted
         % Cell coordinates
         CellCoordinates
+        % Distance matrix between cells
+        CellDistance
 		% Wavelet
 		Wavelet
 		% SWA analytics
 		SWAanalytics
+		% PhaseLock
+		PhaseLock
+        % Cross-correlation between imaging signals at specified intervals
+        CrossCorrelationImaging CrossCorrelationResult = CrossCorrelationResult
+        % Cross-correlation between ephys and imaging signals at specified intervals
+        CrossCorrelationEphysImaging CrossCorrelationResult = CrossCorrelationResult
     end
     properties (Dependent)
         % Image file type
@@ -396,7 +399,7 @@ classdef ImagingData < handle
         
         function value = get.IsFrameScan(this)
             value = [];
-            if ~isempty(this.RawImage)
+			if ~isempty(this.RawImage)
                 value = size(this.RawImage, 1) > 1;
 			elseif ~isempty(this.ROIs)
 				value = min(size(this.ROIs)) > 1;
@@ -454,7 +457,7 @@ classdef ImagingData < handle
                 value = bsxfun(@rdivide, green, red);
             end
 		end
-		
+
 		% Simple methods
         function [pxx,f] = periodogram(this)
 			l = length(this.Time);
@@ -462,9 +465,80 @@ classdef ImagingData < handle
 				[pxx(i,:),f] = periodogram(this.DeltaFperF0(:,i,1), rectwin(l), l, this.SamplingFrequency);
 			end
 		end
+		
+		function plotPowerSpectrumEphys(this, freq)
+			samplingFrequency = 1 / (this.EphysTime(2) - this.EphysTime(1));
+			% Low-pass filter at 50 Hz
+			% [b,a] = butter(4, 50*2/samplingFrequency);
+			% data = filter(b, a, this.Ephys);
+
+			data = this.Ephys;
+
+			% Calculate power spectrum
+			wind = hann(length(data));
+			fmin = freq(1);
+			fmax = freq(2);
+			fr = linspace(fmin, fmax, 50);
+			[pxx, f] = periodogram(data, wind, fr, samplingFrequency, 'power');
+			plot(f, pxx);
+			xlabel('Frequency (Hz)');
+			ylabel('Power (dB)');
+		end
+		
+		function plotPhaselock(this)
+			if (~isempty(this.PhaseLock))
+				imagesc(this.PhaseLock);
+				colormap jet;
+				colorbar;
+				xlabel("Cell #");
+				ylabel("Cell #");
+			end
+		end
+		
+		function plotPhaselockMap(this)
+			if (~isempty(this.PhaseLock))
+				% All ROIs
+				subplot(6,2,1:4);
+				m = double(this.ROIs2D);
+				meanPLV = nanmean(this.PhaseLock);
+				for i = 1:this.CellNum
+					m(m == i) = meanPLV(i);
+				end
+				imagesc(m);
+				colorbar;
+				colormap jet;
+
+				subplot(6,2,6);
+				for i = 1:size(this.PhaseLock, 1)
+					for j = i+1:size(this.PhaseLock, 2)
+						if this.PhaseLock(i,j) > 0.8
+							line([this.CellCoordinates.centerX(i) this.CellCoordinates.centerX(j)], [size(m,1)-this.CellCoordinates.centerY(i) size(m,1)-this.CellCoordinates.centerY(j)], 'LineWidth', 0.1, 'Color', 'w');
+						end
+					end
+				end
+			end
+		end
+		
+		function plotPhaselockVsCellDistance(this)
+			if (~isempty(this.PhaseLock) && ~isempty(this.CellDistance))
+				dist = tril(this.CellDistance);
+				dist(dist == 0) = nan;
+				pl = tril(this.PhaseLock);
+				pl(pl == 0) = nan;
+				plot(dist(this.Glia, this.Glia), pl(this.Glia, this.Glia), 'r.');
+				hold on;
+				plot(dist(this.Neuron, this.Neuron), pl(this.Neuron, this.Neuron), 'g.');
+				plot(dist(this.Glia, this.Neuron), pl(this.Glia, this.Neuron), 'b.');
+				xlabel("Cell pair distance");
+				ylabel("PLV");
+			end
+		end
 
 		function plotWaveletCell(this, ind, freq)
 			wavelettype = 'cmor1-2';
+			if freq(1) > 2
+				wavelettype = 'cmor1-6';
+			end
 			dt = this.SamplingInterval;
 			fmin = freq(1);
 			fmax = freq(2);
@@ -483,25 +557,6 @@ classdef ImagingData < handle
 			shading flat;
 			xlabel('Time (s)');
 			ylabel('Frequency (Hz)');
-		end
-
-		function plotPowerSpectrumEphys(this, freq)
-			samplingFrequency = 1 / (this.EphysTime(2) - this.EphysTime(1));
-			% Low-pass filter at 50 Hz
-			% [b,a] = butter(4, 50*2/samplingFrequency);
-			% data = filter(b, a, this.Ephys);
-
-			data = this.Ephys;
-
-			% Calculate power spectrum
-			wind = hann(length(data));
-			fmin = freq(1);
-			fmax = freq(2);
-			fr = linspace(fmin, fmax, 50);
-			[pxx, f] = periodogram(data, wind, fr, samplingFrequency, 'power');
-			plot(f, pxx);
-			xlabel('Frequency (Hz)');
-			ylabel('Power (dB)');
 		end
 
         function showCell(this, ind)
@@ -556,7 +611,7 @@ classdef ImagingData < handle
         calculateCrossCorrelation(this)
         calculateDeltaFperF0(this)
         calculateF(this)
-        calculatePhaselock(this)
+        calculatePhaselock(this, frequencyRange)
 		calculateWavelet(this, frequencyRange)
 		calculateSWAanalytics(this)
         convert1DTo2D(this)

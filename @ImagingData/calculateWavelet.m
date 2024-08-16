@@ -1,6 +1,9 @@
 function calculateWavelet(this, frequencyRange)
 	% Imaging
-	wavelettype = 'cmor1-6';
+	wavelettype = 'cmor1-2';
+	if frequencyRange(1) > 2
+		wavelettype = 'cmor1-6';
+	end
 	dt = this.Time(2) - this.Time(1);
 	minscale = centfrq(wavelettype)/(frequencyRange(1)*dt);
 	maxscale = centfrq(wavelettype)/(frequencyRange(2)*dt);
@@ -24,16 +27,18 @@ function calculateWavelet(this, frequencyRange)
 	this.Wavelet.Time = this.Time;
 
 	% Ephys
-	dt = (this.EphysTime(2) - this.EphysTime(1)) * 10;
-	minscale = centfrq(wavelettype)/(frequencyRange(1)*dt);
-	maxscale = centfrq(wavelettype)/(frequencyRange(2)*dt);
-	scales = logspace(log10(minscale), log10(maxscale), max(round(frequencyRange(2) - frequencyRange(1)) * 5, 50));
-	data = this.Ephys(1:10:end, 1);
-	ephysTime = dt:dt:size(data,1)*dt;
-	cfs = cwt(data, scales, wavelettype);
-	cfs(:, ephysTime < 3 | ephysTime > max(ephysTime) - 3) = NaN; % Delete first and last 3 s due to border effect
-	
-	this.Wavelet.CfsEphys = abs(cfs);
-	this.Wavelet.FrequencyEphys = scal2frq(scales, wavelettype, dt);
-	this.Wavelet.TimeEphys = ephysTime;
+	% if ~isempty(this.Ephys)
+	% 	dt = (this.EphysTime(2) - this.EphysTime(1)) * 10;
+	% 	minscale = centfrq(wavelettype)/(frequencyRange(1)*dt);
+	% 	maxscale = centfrq(wavelettype)/(frequencyRange(2)*dt);
+	% 	scales = logspace(log10(minscale), log10(maxscale), max(round(frequencyRange(2) - frequencyRange(1)) * 5, 50));
+	% 	data = this.Ephys(1:10:end, 1);
+	% 	ephysTime = dt:dt:size(data,1)*dt;
+	% 	cfs = cwt(data, scales, wavelettype);
+	% 	cfs(:, ephysTime < 3 | ephysTime > max(ephysTime) - 3) = NaN; % Delete first and last 3 s due to border effect
+	% 
+	% 	this.Wavelet.CfsEphys = abs(cfs);
+	% 	this.Wavelet.FrequencyEphys = scal2frq(scales, wavelettype, dt);
+	% 	this.Wavelet.TimeEphys = ephysTime;
+	% end
 end
