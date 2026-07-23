@@ -24,14 +24,14 @@ function importCellAnnotation(this)
 			fprintf("Cell %i type changed from '%s' to '%s'\n", celldata.cellNumber(i), autoCellType(i), celldata.cellType{i});
 			changedCounter = changedCounter + 1;
 		end
-		
-		
 	end
+
 	celldata.autoCellType = autoCellType;
 	fprintf("%i cells have changed type\n", changedCounter);
 	
 	% Update imagingdata
 	for i = 1:height(celldata)
+		iCell = celldata.cellNumber(i);
 		if celldata.cellType{i} == "astrocyte"
 			this.Neuron(iCell) = false;
 			this.Glia(iCell) = true;

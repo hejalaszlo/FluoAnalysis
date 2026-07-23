@@ -4,7 +4,9 @@ function calculateSWAanalytics(this)
         return
 	end
     
-	this.calculateWavelet([4 8]);
+	this.calculateWavelet([0.5 4]);
+	% this.calculateWavelet([2 4]);
+	% this.calculateWavelet([4 8]);
 	this.SWAanalytics.maxcfs = max(this.Wavelet.CfsByFrequency, [], 2);
 	this.SWAanalytics.mincfs = min(this.Wavelet.CfsByFrequency, [], 2);
 	this.SWAanalytics.meancfs = mean(this.Wavelet.CfsByFrequency, 2);

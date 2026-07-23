@@ -24,8 +24,11 @@ function response = getCellData(this, cellnum)
        else % 2D ROIs
             objectStats = regionprops(this.ROIs2D, 'Centroid');
             width = 40/this.PixelHeight;
+			width = 40;
             top = max(0, objectStats(cellnum).Centroid(1) - width/2/this.PixelWidth);
             left = max(0, objectStats(cellnum).Centroid(2) - width/2/this.PixelHeight);
+            top = max(0, objectStats(cellnum).Centroid(1) - width/2);
+            left = max(0, objectStats(cellnum).Centroid(2) - width/2);
             rect = [top left width width];
             roi = logical(this.ROIs2D == cellnum);
             roiPerim = logical(bwperim(this.ROIs2D == cellnum));
